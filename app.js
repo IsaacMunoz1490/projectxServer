@@ -13,6 +13,19 @@ const hatsRouter = require('./routes/hatsRouter');
 const shoesRouter = require('./routes/shoesRouter');
 const topsRouter = require('./routes/topsRouter');
 
+
+//  Connecting Mongoose
+const mongoose = require('mongoose');
+
+const url = 'mongodb://localhost:27017/projectx';
+const connect = mongoose.connect(url, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+connect
+.then(() => console.log('Connected correctly to server'),
+err => console.log(err)
+);
 var app = express();
 
 // view engine setup
