@@ -1,47 +1,76 @@
 const express = require('express');
+const Shoes = require('../models/shoes');
+
+
 const shoesRouter = express.Router();
 
 shoesRouter.route('/')
-.all((req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    next();
+.get((req, res, next) => {
+    Shoes.find()
+    .then(shoes => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(shoes);
+    })
+    .catch(err => next(err));
 })
-.get((req, res) => {
-    res.end('Uploading all the shoes for you!');
-})
-.post((req, res) => {
-    res.end(`Will add the shoes: ${req.body.name} with description: ${req.body.description}`);
+.post((req, res, next) => {
+    Shoes.create(req.body)
+    .then(shoe => {
+        console.log('New Shoes Added', shoe);
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(shoe);
+    })
+    .catch(err => next(err));
 })
 .put((req, res) => {
     res.statusCode= 403;
     res.end('PUT operation not supported on /shoes');
 })
-.delete((req, res) => {
-    res.end('Deleting all shoes!');
+.delete((req, res, next) => {
+    Shoes.deleteMany()
+    .then(response => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(response);
+    })
+    .catch(err => next(err));
 });
 
 // shoesId
 shoesRouter.route('/:shoesId')
-.all((req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    next();
-})
-.get((req, res) => {
-    res.end(`Will send the shoes: ${req.params.shoesId} to you`)
+.get((req, res, next) => {
+    Shoes.findById(req.params.shoesId)
+    .then(shoe => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(shoe);
+    })
+    .catch(err => next(err))
 })
 .post((req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not uspported on /shoes/${req.params.shoesId} to you`);
 })
-.put((req, res) => {
-    res.write(`Updating the shoes: ${req.params.shoesId}\n`)
-    res.end(`Will update the shoes: ${req.body.name} with description: ${req.body.description}`);
+.put((req, res, next) => {
+    Shoes.findByIdAndUpdate(req.params.shoesId, {$set: req.body}, {new: true })
+    .then(shoe => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(shoe);
+    })
+    .catch(err => next(err));
 })
-.delete((req, res) => {
-    res.end(`Deleting shoes: ${req.params.shoesId}`);
-})
+.delete((req, res, next) => {
+    Shoes.findByIdAndDelete(req.params.shoesId)
+    .then(response => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(response);
+    })
+    .catch(err => next(err));
+});
 
 
 module.exports = shoesRouter;
