@@ -23,9 +23,9 @@ const connect = mongoose.connect(url, {
   useUnifiedTopology: true
 });
 connect
-.then(() => console.log('Connected correctly to server'),
-err => console.log(err)
-);
+  .then(() => console.log('Connected correctly to server'),
+    err => console.log(err)
+  );
 var app = express();
 
 // view engine setup
@@ -35,33 +35,45 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser('12345-54321-12345-54321'));
 
 // Basic authentication 
 function auth(req, res, next) {
-  console.log(req.headers);
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
+  if (!req.signedCookies.user) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
       const err = new Error('You are not authenticated!');
       res.setHeader('WWW-Authenticate', 'Basic');
       err.status = 401;
       return next(err);
-  }
-  const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-  const user = auth[0];
-  const pass = auth[1];
-  if (user === 'admin' && pass === 'password') {
+    }
+
+    const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+    const user = auth[0];
+    const pass = auth[1];
+    if (user === 'admin' && pass === 'password') {
+      res.cookie('user', 'admin', { signed: true });
       return next(); // authorized
-  } else {
+    } else {
       const err = new Error('You are not authenticated!');
-      res.setHeader('WWW-Authenticate', 'Basic');      
+      res.setHeader('WWW-Authenticate', 'Basic');
       err.status = 401;
       return next(err);
+    }
+  } else {
+    if (req.signedCookies.user === 'admin') {
+      return next();
+    } else {
+      const err = new Error('You are not authenticated!');
+      err.status = 401;
+      return next(err);
+    }
   }
 }
-
 app.use(auth);
 // Browser authentication end.
+
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 
@@ -74,12 +86,12 @@ app.use('/shoes', shoesRouter);
 app.use('/tops', topsRouter);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
