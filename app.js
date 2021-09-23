@@ -4,7 +4,8 @@ var path = require('path');
 var logger = require('morgan');
 const session = require('express-session');
 const FileStore = require('session-file-store')(session);
-
+const passport = require('passport');
+const authenticate = require('./authenticate');
 
 // Bringing in Routers
 var indexRouter = require('./routes/index');
@@ -45,28 +46,27 @@ app.use(session({
   store: new FileStore()
 }));
 
+app.use(passport.initialize());
+app.use(passport.session());
+
+
 // This snipet tracks cookies 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 // Basic authentication 
 function auth(req, res, next) {
-  console.log(req.session);
+  console.log(req.user);
 
-  if (!req.session.user) {
+  if (!req.user) {
       const err = new Error('You are not authenticated!');
       err.status = 401;
       return next(err);
   } else {
-    if (req.session.user === 'authenticated') { // authentication connected
       return next();
-    } else {
-      const err = new Error('You are not authenticated!');
-      err.status = 401;
-      return next(err);
-    }
   }
 }
+
 app.use(auth);
 // Browser authentication end.
 
